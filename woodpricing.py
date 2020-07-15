@@ -1,8 +1,10 @@
-import pandas as pd
+import dash
 import numpy as np
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
-wpg=pd.read_csv('wpg.csv')
+
 scaler,wpgs = {},{}
+wpg=pd.read_csv('wpg.csv')
 for c in wpg.Channel.unique():
     scaler[c] = {}
     scaler[c] = StandardScaler()
@@ -14,7 +16,6 @@ for c in wpg.Channel.unique():
     wpgs[c]=pd.melt(wpgs[c], id_vars=['Zone','Channel','Year','Month'],var_name='Type', value_name='Value')
 
 # Build App
-import dash
 app = dash.Dash(__name__)
 app.layout = html.Div([
     html.H1("Wood Pricing Strategy"),
@@ -34,9 +35,6 @@ app.layout = html.Div([
 )
 def update_figure(c):
     return px.line(wpgs[c], x='Month', y='Value', facet_row='Type', color='Year')
-
-
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
