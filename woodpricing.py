@@ -1,26 +1,27 @@
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 import plotly.express as px
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
 
-scaler,wpgs = {},{}
+app = dash.Dash(__name__)
+server = app.server
+
+scaler, wpgs = {}, {}
 wpg=pd.read_csv('wpg.csv')
 for c in wpg.Channel.unique():
     scaler[c] = {}
     scaler[c] = StandardScaler()
-    wpgs[c] = wpg.loc[wpg.Channel==c].copy()
-    wps = wpgs[c][['Baht','Ton']]
+    wpgs[c] = wpg.loc[wpg.Channel == c].copy()
+    wps = wpgs[c][['Baht', 'Ton']]
     scaler[c].fit(wps)
-    print(c, scaler[c].mean_)
-    wpgs[c][['Baht','Ton']] = scaler[c].transform(wps)
-    wpgs[c]=pd.melt(wpgs[c], id_vars=['Zone','Channel','Year','Month'],var_name='Type', value_name='Value')
+    wpgs[c][['Baht', 'Ton']] = scaler[c].transform(wps)
+    wpgs[c]=pd.melt(wpgs[c], id_vars=['Zone', 'Channel', 'Year', 'Month'], var_name='Type', value_name='Value')
 
 # Build App
-app = dash.Dash(__name__)
 app.layout = html.Div([
     html.H1("Wood Pricing Strategy"),
     html.Label(["channel", dcc.Dropdown(
