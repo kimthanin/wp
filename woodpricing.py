@@ -1,7 +1,7 @@
-import dash
-app = dash.Dash(__name__)
-import pandas as pd; import numpy as np; wpg=pd.read_csv('wpg.csv')
+import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
+wpg=pd.read_csv('wpg.csv')
 scaler,wpgs = {},{}
 for c in wpg.Channel.unique():
     scaler[c] = {}
@@ -14,6 +14,8 @@ for c in wpg.Channel.unique():
     wpgs[c]=pd.melt(wpgs[c], id_vars=['Zone','Channel','Year','Month'],var_name='Type', value_name='Value')
 
 # Build App
+import dash
+app = dash.Dash(__name__)
 app.layout = html.Div([
     html.H1("Wood Pricing Strategy"),
     html.Label(["channel", dcc.Dropdown(
