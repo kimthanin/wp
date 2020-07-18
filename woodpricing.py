@@ -1,4 +1,4 @@
-import numpy as np
+# import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import plotly.express as px
@@ -42,3 +42,4 @@ def update_figure(c):
     return px.line(wpgs[c], x='Month', y='Value', facet_row='Type', color='Year')
 
 if __name__ == '__main__':
+    app.run_server(debug=True)
