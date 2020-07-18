@@ -42,4 +42,3 @@ def update_figure(c):
     return px.line(wpgs[c], x='Month', y='Value', facet_row='Type', color='Year')
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
