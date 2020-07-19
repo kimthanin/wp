@@ -14,7 +14,7 @@ Jinja2
 joblib
 MarkupSafe
 numpy
-pandas==1.0.1
+pandas==1.0.5
 plotly
 python-dateutil
 pytz
@@ -25,3 +25,4 @@ six
 sklearn
 threadpoolctl
 Werkzeug
+waitress
