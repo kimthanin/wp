@@ -13,8 +13,6 @@ server = app.server
 scaler, wpgs = {}, {}
 wpg = pd.read_csv('wpg.csv')
 
-
-
 for c in wpg.Channel.unique():
     scaler[c] = {}
     scaler[c] = StandardScaler()
@@ -34,7 +32,7 @@ app.layout = html.Div([
                 ]),
     dcc.Graph(id='graph'),
     html.H2("More Graph Comming Soon..."),
-    dcc.Graph(id='graph1'),
+    dcc.Graph(id='graph'),
 ])
 
 
@@ -44,7 +42,9 @@ app.layout = html.Div([
     [Input("channel-dropdown", "value")]
 )
 def update_figure(c):
-    return px.line(wpgs[c], x='Month', y='Value', facet_row='Type', color='Year')
+    return px.line(wpgs[c],
+                   x='Month', y='Value',
+                   facet_row='Type', color='Year')
 
 
 if __name__ == '__main__':
