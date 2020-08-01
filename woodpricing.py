@@ -31,14 +31,23 @@ app.layout = html.Div([
         options=[{'label': c1, 'value': c1} for c1 in wpg.Channel.unique()])
                 ]),
     dcc.Graph(id='graph'),
-    html.H2("More Graph Comming Soon..."),
-    dcc.Graph(id='graph'),
+    html.H2("More Graph Comming Soon...."),
+    dcc.Graph(id='graph1'),
 ])
 
 
 # Define callback to update graph
 @app.callback(
     Output('graph', 'figure'),
+    [Input("channel-dropdown", "value")]
+)
+def update_figure(c):
+    return px.line(wpgs[c],
+                   x='Month', y='Value',
+                   facet_row='Type', color='Year')
+
+@app.callback(
+    Output('graph1', 'figure'),
     [Input("channel-dropdown", "value")]
 )
 def update_figure(c):
