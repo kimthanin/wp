@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import plotly.express as px
@@ -7,12 +7,57 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash
 
+from dash_core_components import Graph, Dropdown, Tab, Tabs
+from sklearn.ensemble import RandomForestRegressor
+from sktime.forecasting.compose import ReducedRegressionForecaster
+
+
+# Model
+def wpmodel(wpg):
+    model = RandomForestRegressor(random_state=0)
+    ry = range(2015, 2021); rm = range(1, 13)
+    dt = pd.concat([pd.DataFrame({'Month': rm}, index=[y] * len(rm))
+                   .reset_index().rename(columns={'index': 'Year'}) for y in ry]) \
+        .reset_index(drop=True)
+    csd, csdp = {}, {}
+    for c in wpg.Channel.unique():  # ['N1BK']
+        dtcs = dt.drop(dt.loc[((dt.Year == 2020) & (dt.Month >= 8))].index) \
+            .merge(wpg.loc[wpg.Channel == c], how='left', left_on=['Year', 'Month'], right_on=['Year', 'Month'])
+        cs = dtcs.fillna(method='ffill').dropna()
+        cspct = cs[['Ton', 'Baht']].pct_change().rename(columns={'Ton': 'TonPct', 'Baht': 'BahtPct'}) * 100
+        csdiff = cs[['Ton', 'Baht']].diff().rename(columns={'Ton': 'TonDiff', 'Baht': 'BahtDiff'})
+        cs = cs.merge(cspct, how='left', left_index=True, right_index=True)
+        cs = cs.merge(csdiff, how='left', left_index=True, right_index=True)
+        cs['E'] = cs.TonPct / cs.BahtPct
+        cs['S'] = cs.TonDiff / cs.BahtDiff
+        cs['EC'] = cs.E.clip(-1000, 1000).fillna(method='ffill')
+        cs['SC'] = cs.E.clip(-1000, 1000).fillna(method='ffill')
+        cs['Type'] = 'Actual'
+        csd[c] = cs[['Year', 'Month', 'EC', 'Type']]
+    for c in wpg.Channel.unique():
+        a = len(csd[c].EC)
+        if a > 20:
+            csdp[c] = csd[c]
+    for c in csdp.keys():
+        print(c)
+        y = csdp[c].EC.dropna(); num_step = 5; fh = np.arange(1, num_step + 1)  # forecasting horizon
+        f = ReducedRegressionForecaster(model, window_length=12)  # monthly seasonal periodicity
+        f.fit(y)
+        y_pred = f.predict(fh)
+        y_pred_df = pd.DataFrame(y_pred)
+        y_pred_df.rename(columns={0: 'EC'}, inplace=True)
+        y_pred_df['Type'] = 'Forecast'
+        y_pred_df = dt.merge(y_pred_df, how='inner', left_index=True, right_index=True)
+        csdp[c] = csdp[c].append(y_pred_df)
+    return csdp
+
+
+# Main
 app = dash.Dash(__name__)
 server = app.server
-
+wpg = pd.read_csv('wpg.csv').drop(columns='Amount')
+csdp = wpmodel(wpg)
 scaler, wpgs = {}, {}
-wpg = pd.read_csv('wpg.csv')
-
 for c in wpg.Channel.unique():
     scaler[c] = {}
     scaler[c] = StandardScaler()
@@ -24,36 +69,46 @@ for c in wpg.Channel.unique():
                       id_vars=['Zone', 'Channel', 'Year', 'Month'])
 
 # Build App
-app.layout = html.Div([
-    html.H1("Wood Pricing Strategy"),
-    html.Label(["channel", dcc.Dropdown(
-        id='channel-dropdown', clearable=False, value='N3NB',
-        options=[{'label': c1, 'value': c1} for c1 in wpg.Channel.unique()])
-                ]),
-    dcc.Graph(id='graph'),
-    html.H2("More Graph Comming Soon...."),
-    dcc.Graph(id='graph1'),
-])
+app.layout = \
+    html.Div([
+        html.H1("Wood Pricing Strategy"),
+        html.Label(["channel",
+                    Dropdown(id='channel-dropdown', value=['N3NB', 'N3DT'],
+                             multi=True, clearable=True,
+                             options=[{'label': c1, 'value': c1}
+                                      for c1 in wpg.Channel.unique()])
+                    ]),
+        Tabs([
+            Tab(label='Price/Quantity', children=[
+                html.Div(id='PQ')
+            ]),
+            Tab(label='Sensitivity', children=[
+                html.Div(id='SE')
+            ]),
+            Tab(label='Data Quality', children=[
+
+            ]),
+        ])
+    ])
 
 
 # Define callback to update graph
 @app.callback(
-    Output('graph', 'figure'),
+    [Output('PQ', 'children'), Output('SE', 'children')],
     [Input("channel-dropdown", "value")]
 )
-def update_figure(c):
-    return px.line(wpgs[c],
-                   x='Month', y='Value',
-                   facet_row='Type', color='Year')
+def update_figure(c_list):
+    PQ, SE = [], []
+    for c in c_list:
+        PQ_fig = px.line(wpgs[c], x='Month', y='Value', color='Year',
+                         facet_row='Type', category_orders={'Type': ['Baht', 'Ton']})
+        PQ.append(Graph(figure=PQ_fig))
 
-@app.callback(
-    Output('graph1', 'figure'),
-    [Input("channel-dropdown", "value")]
-)
-def update_figure(c):
-    return px.line(wpgs[c],
-                   x='Month', y='Value',
-                   facet_row='Type', color='Year')
+        SE_fig = px.bar(csdp[c], x='Month', y='EC', color='Type',
+                        facet_row='Year')
+        SE.append(Graph(figure=SE_fig))
+
+    return PQ, SE
 
 
 if __name__ == '__main__':

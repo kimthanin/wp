@@ -26,3 +26,4 @@ sklearn
 threadpoolctl
 Werkzeug
 waitress
+sktime
