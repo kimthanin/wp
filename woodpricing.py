@@ -1,13 +1,11 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+import dash
 import plotly.express as px
-import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-import dash
-
 from dash_core_components import Graph, Dropdown, Tab, Tabs
+from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sktime.forecasting.compose import ReducedRegressionForecaster
 
@@ -71,13 +69,11 @@ for c in wpg.Channel.unique():
 # Build App
 app.layout = \
     html.Div([
-        html.H1("Wood Pricing Strategy"),
-        html.Label(["channel",
-                    Dropdown(id='channel-dropdown', value=['N3NB', 'N3DT'],
-                             multi=True, clearable=True,
-                             options=[{'label': c1, 'value': c1}
-                                      for c1 in wpg.Channel.unique()])
-                    ]),
+        Dropdown(id='SLOC', value=['N3NB', 'N3DT'],
+                 placeholder='Select Storage Locations',
+                 multi=True, clearable=True,
+                 options=[{'label': c1, 'value': c1}
+                          for c1 in wpg.Channel.unique()]),
         Tabs([
             Tab(label='Price/Quantity', children=[
                 html.Div(id='PQ')
@@ -95,7 +91,7 @@ app.layout = \
 # Define callback to update graph
 @app.callback(
     [Output('PQ', 'children'), Output('SE', 'children')],
-    [Input("channel-dropdown", "value")]
+    [Input("SLOC", "value")]
 )
 def update_figure(c_list):
     PQ, SE = [], []
