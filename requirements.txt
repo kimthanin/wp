@@ -2,6 +2,7 @@ Brotli
 click
 dash
 dash-core-components
+dash_bootstrap_components
 dash-html-components
 dash-renderer
 dash-table
