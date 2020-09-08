@@ -1,4 +1,3 @@
-venv
-*.pyc
-.env
-.DS_Store
+/venv/
+/ignore/
+/.ipynb_checkpoints/

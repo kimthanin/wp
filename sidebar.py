@@ -6,11 +6,14 @@ import dash_core_components as dcc
 import dash_html_components as html
 import numpy as np
 import pandas as pd
+import datetime as dt
 import plotly.express as px
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+
+# Sensitivity Analysis
 with open('Sloc.json', 'r') as o:
     sloc = json.load(o)
 with open('Zone.json', 'r') as o:
@@ -52,6 +55,25 @@ for t in tl:
 wpmsjzm = wpmsjz.merge(dft, left_on=['dt', 'Sloc'], right_on=['dt', 'Sloc'], how='outer')
 wpmjz = wpmjz.merge(dft, left_on=['dt', 'Sloc'], right_on=['dt', 'Sloc'], how='outer')
 tls = np.sort(tl)[::-1]
+
+# Cumulative Analysis
+ym, ymi, ymc = {}, {}, {}
+months = [dt.date(2008, i, 1).strftime('%b') for i in range(1,13)]
+df = pd.read_csv('View_Transaction_SFT_6049_2020_09_08_14_29_00.csv')
+for t in ['Purchase_price_thb_ton','MillWeight']:
+    ym[t] = df.groupby(['Year','Month'])[t].sum().reset_index()
+    ymi[t]= ym[t][ym[t].Year>=2016].reset_index(drop=True)
+    ymc[t]= ymi[t].groupby('Year').cumsum().merge(ymi[t], left_index=True, right_index=True, suffixes=('_c',''))
+ymp = ymc['Purchase_price_thb_ton'].merge(ymc['MillWeight'])
+ymp['Price']  = ymp['Purchase_price_thb_ton'] / ymp['MillWeight']
+ymp['Price_c']= ymp['Purchase_price_thb_ton_c'] / ymp['MillWeight_c']
+ymp.Year = ymp.Year.astype('category')
+ymp.Month = ymp.Month.astype('category')
+
+
+
+
+
 
 # the styles for the main content position it to the right of the sidebar and
 CONTENT_STYLE = {"margin-left": "18rem", "margin-right": "2rem", "padding": "2rem 1rem"}  # add some padding.
@@ -197,6 +219,6 @@ def render_page_content(pathname):
 
 
 if __name__ == "__main__":
-    app.run_server(port=8888, debug=True)
+    app.run_server(port=5000, debug=True)
 
 # , color="continent" , title=str(value), hover_name=
