@@ -4,6 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
 from dash.dependencies import Input, Output, State
+from flask.helpers import get_root_path
 
 import process
 import sb
