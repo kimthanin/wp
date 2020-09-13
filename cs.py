@@ -12,8 +12,9 @@ from wdsm import ympd
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 sbcss = 'https://raw.githubusercontent.com/facultyai/dash-bootstrap-components/master/examples/multi-page-apps/\
 responsive-collapsible-sidebar/assets/responsive-sidebar.css'
+#https://raw.githubusercontent.com/kimthanin/wp/master/assets/responsive-sedbar.css
 external_stylesheets = [dbc.themes.BOOTSTRAP, sbcss]
-app = dash.Dash(
+app = dash.Dash(__name__,
     #suppress_callback_exceptions=True,
     external_stylesheets=external_stylesheets,
     meta_tags=[meta]
