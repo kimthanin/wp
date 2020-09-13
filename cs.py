@@ -79,9 +79,7 @@ colbar = html.Div([
     dbc.Collapse(card_wdws, id='colbar-collapse', is_open=True)
 ])
 
-page_wdws = dbc.Row([colbar,
-                     dbc.Col([dcc.Graph(id='wdsm1'), dcc.Graph(id='wdsm2')], width=8)
-                     ])
+page_wdws = dbc.Row([colbar, dbc.Col([dcc.Graph(id='wdsm1'), dcc.Graph(id='wdsm2')])])
 
 
 # App Callback
