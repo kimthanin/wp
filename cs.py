@@ -9,7 +9,7 @@ import process
 import sb
 from wdsm import ympd
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
-external_stylesheets = [dbc.themes.BOOTSTRAP, 'responsive-sedbar.css'] # '/assets/bWLwgP.css',
+external_stylesheets = [dbc.themes.BOOTSTRAP, '/assets/responsive-sedbar.css'] # '/assets/bWLwgP.css',
 app = dash.Dash(
     #suppress_callback_exceptions=True,
     url_base_pathname='/dashboard/',
