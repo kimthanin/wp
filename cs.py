@@ -5,15 +5,9 @@ import dash_html_components as html
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 
-# import content
 import process
 import sb
-
-df, list_all, ymp = process.get_data_app()
-ymp['all']['Seasonal'] = 'Rainy'
-ymp['all'].loc[ymp['all'].Month.isin(['1', '2', '3', '4', '11', '12']), 'Seasonal'] = 'Summer'
-# ymp['all'].loc[ymp['all'].Year.isin(['2018']), 'Seasonal'] = '2018'
-#ymp['all'].Month = ymp['all'].Month.astype('category')
+from wdsm import ympd
 
 app = dash.Dash(
     suppress_callback_exceptions=True,
@@ -22,28 +16,6 @@ app = dash.Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1"}
     ],
 )
-
-# wdws
-
-card_wdws = dbc.Card(
-    [
-        dbc.CardBody(
-            [
-                html.H4("Select Data", className="card-title"),
-                dcc.Dropdown(id='wdws_y', value='all',
-                             options=[{'label': y, 'value': y} for y in ['all'] + list(df.Year.unique())]),
-                dcc.Dropdown(id='wdws_m', value='all',
-                             options=[{'label': m, "value": m} for m in ['all'] + list(df.Month.unique())]),
-                dcc.Dropdown(id='wdws_s', value='all',
-                             options=[{'label': s, "value": s} for s in list_all]),
-                dcc.Dropdown(id='wdws_c', value='Seasonal',
-                             options=[{'label': c, "value": c} for c in ['Seasonal']])
-            ]
-        )
-    ], color="light", outline=True
-)
-
-page_wdws = dbc.Row([card_wdws, dcc.Graph(id='wdws')])
 
 sidebar_header = sb.sidebar_header()
 sidebar = html.Div(
@@ -77,34 +49,68 @@ sidebar = html.Div(
 )
 
 content = html.Div(id="page-content")
-
 app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
+
+# wdws
+ymc, ymp = process.get_data_app()
+d_year = dbc.Row([
+    dbc.Col(dbc.Label('Year')),
+    dbc.Col(dcc.Dropdown(id='wdws_y', value='all', # + list(df.Year.unique(),
+                         options=[{'label': y, 'value': y} for y in ['all']]))
+], form=True)
+d_month = dbc.Row([
+    dbc.Col(dbc.Label('Month')),
+    dbc.Col(dcc.Dropdown(id='wdws_m', value='all', # + list(df.Year.unique(),
+                         options=[{'label': y, 'value': y} for y in ['all']]))
+], form=True)
+d_sloc = dbc.Row([
+    dbc.Col(dbc.Label('SLOC')),
+    dbc.Col(dcc.Dropdown(id='wdws_s', value='all',
+                         options=[{'label': y, 'value': y} for y in ['all']]))
+], form=True)
+
+card_wdws = html.Div([d_year, d_month, d_sloc])
+
+colbar = html.Div([
+    html.Button(html.P('Select Data', id='colbar-label'), id='colbar-toggle', className="navbar-toggler"),
+    dbc.Collapse(card_wdws, id='colbar-collapse', is_open=True)
+])
+
+page_wdws = dbc.Row([colbar,
+                     dbc.Col([dcc.Graph(id='wdsm1'), dcc.Graph(id='wdsm2')], width=8)
+                     ])
 
 
 # App Callback
+@app.callback([Output('wdsm1', 'figure'), Output('wdsm2', 'figure')],
+              [Input('wdws_y', 'value'), Input('wdws_m', 'value'), Input('wdws_s', 'value')])
+def ug_wdws(y, m, s):
+    print(y, m, s, '''
+    Top: Step_1_Forecast Quantity (Size=Average Transaction Price) | 
+    Bottom: Step_2_Forecast Price (Size=Number of Transactions) | 
+    Color: Year (Darker=Newer)''', end='')
+    fig1 = px.scatter(ympd['all'].loc[ympd['all'].Y == 'Year'], x='MillWeight', y='YP', color='YC', size='mean_x',
+                      symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
+                      height=240, width=1200)
+    fig1.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig1.for_each_yaxis(lambda a: a.update(dtick=1))
+    fig1.for_each_yaxis(lambda a: a.update(title='', tickangle=90, dtick=1), row=1, col=1)
+    fig1.for_each_xaxis(lambda a: a.update(title='', dtick=10000, showticklabels=False))  # showgrid=True, visible=False
+    fig1.layout.update(coloraxis_showscale=False, showlegend=False, margin=dict(l=0, r=0, t=15, b=0))
+    fig1.update_yaxes(autorange="reversed")  # matches=None
 
-@app.callback(Output('wdws', 'figure'),
-              [Input('wdws_y', 'value'), Input('wdws_m', 'value'), Input('wdws_s', 'value'), Input('wdws_c', 'value')])
-def ug_wdws(y, m, s, c):
-    if (str(m) == 'all') & (str(y) == 'all'):
-        fig = px.scatter(ymp[s], x='MillWeight', y='Price', facet_col='Year', facet_row=c, color='Month',  #
-                         hover_name='Month', hover_data=['Year'],
-        width=1200, height=700, color_continuous_scale=px.colors.sequential.Magenta)
-        #fig.update_layout(coloraxis_colorbar=dict(dtick=1),
-        #                  legend=dict(orientation="h", yanchor="top", xanchor="right"))
-        fig.update(layout_coloraxis_showscale=False)
-        fig.layout.update(showlegend=False)
-        return fig
-    elif str(m) == 'all':
-        return px.scatter(ymp[s].loc[(ymp[s].Year == y)], x='MillWeight', y='Price', height=400)
-    elif str(y) == 'all':
-        return px.scatter(ymp[s].loc[(ymp[s].Month == m)], x='MillWeight', y='Price', height=400)
-    else:
-        return px.scatter(ymp[s].loc[(ymp[s].Year == y) & (ymp[s].Month == m)], x='MillWeight', y='Price', height=400)
+    fig2 = px.scatter(ympd['all'].loc[ympd['all'].Y == 'Price'], x='MillWeight', y='YP', color='YC', size='count_x',
+                      symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
+                      height=500, width=1200, labels={'Type': ''})  # , facet_row='Y'
+    fig2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig2.for_each_yaxis(lambda a: a.update(title='', tickangle=90), row=1, col=1)
+    fig2.for_each_xaxis(lambda a: a.update(title='', dtick=10000))
+    fig2.layout.update(coloraxis_showscale=False, legend_orientation='h', margin=dict(l=0, r=0, t=0, b=0))
+
+    return [fig1, fig2]
 
 
-# Layout Callback
-
+# Callback Page
 @app.callback(
     [Output(f"page-{i}-link", "active") for i in range(1, 4)],
     [Input("url", "pathname")],
@@ -132,6 +138,23 @@ def render_page_content(pathname):
     )
 
 
+# Callback colbar
+@app.callback(
+    [Output("colbar-collapse", "is_open"), Output("colbar-label", "children")],
+    [Input("colbar-toggle", "n_clicks")],
+    [State("colbar-collapse", "is_open")],
+)
+def toggle_colbar_collapse(n, is_open):
+    if n:
+        if is_open:
+            return [not is_open, None]
+        else:
+            return [not is_open, 'Select Data']
+    else:
+        return [is_open, 'Select Data']
+
+
+# Callback Collapse
 @app.callback(
     Output("sidebar", "className"),
     [Input("sidebar-toggle", "n_clicks")],
