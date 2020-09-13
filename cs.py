@@ -8,16 +8,14 @@ from dash.dependencies import Input, Output, State
 import process
 import sb
 from wdsm import ympd
-
+meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 external_stylesheets = [dbc.themes.BOOTSTRAP,
-                        'assets/bWLwgP.css',
-                        "assets/responsive-sedbar.css"]
+                        '/assets/bWLwgP.css',
+                        '/assets/responsive-sedbar.css']
 app = dash.Dash(
-    suppress_callback_exceptions=True,
+    #suppress_callback_exceptions=True,
     external_stylesheets=external_stylesheets,
-    meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1"}
-    ],
+    meta_tags=[meta]
 )
 server = app.server
 
