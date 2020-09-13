@@ -1,1 +1,1 @@
-web: gunicorn woodpricing:server
+web: gunicorn cs:server
