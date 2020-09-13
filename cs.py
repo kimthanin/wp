@@ -10,7 +10,7 @@ import sb
 from wdsm import ympd
 
 external_stylesheets = [dbc.themes.BOOTSTRAP,
-                        'assets/bWLwgP.css'
+                        'assets/bWLwgP.css',
                         "assets/responsive-sedbar.css"]
 app = dash.Dash(
     suppress_callback_exceptions=True,
