@@ -10,52 +10,16 @@ import process
 import sb
 from wdsm import ympd
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
-external_stylesheets = [dbc.themes.BOOTSTRAP, '/assets/responsive-sedbar.css'] # '/assets/bWLwgP.css',
+sbcss = 'https://raw.githubusercontent.com/facultyai/dash-bootstrap-components/master/examples/multi-page-apps/\
+responsive-collapsible-sidebar/assets/responsive-sidebar.css'
+external_stylesheets = [dbc.themes.BOOTSTRAP, sbcss]
 app = dash.Dash(
     #suppress_callback_exceptions=True,
-    url_base_pathname='/dashboard/',
-    assets_folder=get_root_path(__name__) + '/dashboard/assets/',
     external_stylesheets=external_stylesheets,
     meta_tags=[meta]
 )
 server = app.server
-
-sidebar_header = dbc.Row(
-    [
-        dbc.Col(html.H2("Sidebar", className="display-4")),
-        dbc.Col(
-            [
-                html.Button(
-                    # use the Bootstrap navbar-toggler classes to style
-                    html.Span(className="navbar-toggler-icon"),
-                    className="navbar-toggler",
-                    # the navbar-toggler classes don't set color
-                    style={
-                        "color": "rgba(0,0,0,.5)",
-                        "border-color": "rgba(0,0,0,.1)",
-                    },
-                    id="navbar-toggle",
-                ),
-                html.Button(
-                    # use the Bootstrap navbar-toggler classes to style
-                    html.Span(className="navbar-toggler-icon"),
-                    className="navbar-toggler",
-                    # the navbar-toggler classes don't set color
-                    style={
-                        "color": "rgba(0,0,0,.5)",
-                        "border-color": "rgba(0,0,0,.1)",
-                    },
-                    id="sidebar-toggle",
-                ),
-            ],
-            # the column containing the toggle will be only as wide as the
-            # toggle, resulting in the toggle being right aligned
-            width="auto",
-            # vertically align the toggle in the center
-            align="center",
-        ),
-    ]
-)
+sidebar_header = sb.sidebar_header
 sidebar = html.Div(
     [
         sidebar_header,
