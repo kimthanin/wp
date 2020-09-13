@@ -16,6 +16,7 @@ app = dash.Dash(
         {"name": "viewport", "content": "width=device-width, initial-scale=1"}
     ],
 )
+server = app.server
 
 sidebar_header = sb.sidebar_header()
 sidebar = html.Div(
@@ -178,4 +179,7 @@ def toggle_collapse(n, is_open):
 
 
 if __name__ == "__main__":
-    app.run_server(port=5005, debug=True)
+    #app.run_server(port=5005, debug=True)
+    # app.run_server(port=80,debug=True)
+    app.run_server(port=80, host='0.0.0.0')
+    # waitress-serve --listen="0.0.0.0:80" woodpricing:server
