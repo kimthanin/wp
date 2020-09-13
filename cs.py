@@ -9,6 +9,7 @@ import process
 import sb
 from wdsm import ympd
 
+external_stylesheets = ["assets/responsive-sedbar.css"]
 app = dash.Dash(
     suppress_callback_exceptions=True,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
