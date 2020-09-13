@@ -4,21 +4,21 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
 from dash.dependencies import Input, Output, State
-from flask.helpers import get_root_path
 
 import process
 import sb
 from wdsm import ympd
+
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 sbcss = 'https://raw.githubusercontent.com/facultyai/dash-bootstrap-components/master/examples/multi-page-apps/\
 responsive-collapsible-sidebar/assets/responsive-sidebar.css'
-#https://raw.githubusercontent.com/kimthanin/wp/master/assets/responsive-sedbar.css
+# https://raw.githubusercontent.com/kimthanin/wp/master/assets/responsive-sedbar.css
 external_stylesheets = [dbc.themes.BOOTSTRAP, sbcss]
 app = dash.Dash(__name__,
-    #suppress_callback_exceptions=True,
-    external_stylesheets=external_stylesheets,
-    meta_tags=[meta]
-)
+                # suppress_callback_exceptions=True,
+                external_stylesheets=external_stylesheets,
+                meta_tags=[meta]
+                )
 server = app.server
 sidebar_header = sb.sidebar_header
 sidebar = html.Div(
@@ -58,12 +58,12 @@ app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
 ymc, ymp = process.get_data_app()
 d_year = dbc.Row([
     dbc.Col(dbc.Label('Year')),
-    dbc.Col(dcc.Dropdown(id='wdws_y', value='all', # + list(df.Year.unique(),
+    dbc.Col(dcc.Dropdown(id='wdws_y', value='all',  # + list(df.Year.unique(),
                          options=[{'label': y, 'value': y} for y in ['all']]))
 ], form=True)
 d_month = dbc.Row([
     dbc.Col(dbc.Label('Month')),
-    dbc.Col(dcc.Dropdown(id='wdws_m', value='all', # + list(df.Year.unique(),
+    dbc.Col(dcc.Dropdown(id='wdws_m', value='all',  # + list(df.Year.unique(),
                          options=[{'label': y, 'value': y} for y in ['all']]))
 ], form=True)
 d_sloc = dbc.Row([
@@ -94,7 +94,7 @@ def ug_wdws(y, m, s):
     Color: Year (Darker=Newer)''', end='')
     fig1 = px.scatter(ympd['all'].loc[ympd['all'].Y == 'Year'], x='MillWeight', y='YP', color='YC', size='mean_x',
                       symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
-                      height=240, width=1200)
+                      height=240)
     fig1.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig1.for_each_yaxis(lambda a: a.update(dtick=1))
     fig1.for_each_yaxis(lambda a: a.update(title='', tickangle=90, dtick=1), row=1, col=1)
@@ -104,7 +104,7 @@ def ug_wdws(y, m, s):
 
     fig2 = px.scatter(ympd['all'].loc[ympd['all'].Y == 'Price'], x='MillWeight', y='YP', color='YC', size='count_x',
                       symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
-                      height=500, width=1200, labels={'Type': ''})  # , facet_row='Y'
+                      height=500, labels={'Type': ''})  # , facet_row='Y'
     fig2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig2.for_each_yaxis(lambda a: a.update(title='', tickangle=90), row=1, col=1)
     fig2.for_each_xaxis(lambda a: a.update(title='', dtick=10000))
@@ -181,7 +181,7 @@ def toggle_collapse(n, is_open):
 
 
 if __name__ == "__main__":
-    #app.run_server(port=5005, debug=True)
+    # app.run_server(port=5005, debug=True)
     # app.run_server(port=80,debug=True)
     app.run_server(port=80, host='0.0.0.0')
     # waitress-serve --listen="0.0.0.0:80" woodpricing:server
