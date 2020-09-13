@@ -12,6 +12,8 @@ meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 external_stylesheets = [dbc.themes.BOOTSTRAP, 'responsive-sedbar.css'] # '/assets/bWLwgP.css',
 app = dash.Dash(
     #suppress_callback_exceptions=True,
+    url_base_pathname='/dashboard/',
+    assets_folder=get_root_path(__name__) + '/dashboard/assets/',
     external_stylesheets=external_stylesheets,
     meta_tags=[meta]
 )
