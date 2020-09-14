@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 
 import dash_bootstrap_components as dbc
@@ -15,9 +16,19 @@ with open('ympd.json', 'r') as o:
     ympd = json.load(o)
 for s in ['all'] + list(zone.keys()) + list(sloc.keys()):
     ympd[s] = pd.read_json(ympd[s], orient='records')
-
-
-# months = ympd['all'].Month.unique()
+months = ympd['all'].Month.unique()
+emy = pd.DataFrame()
+for y in range(2016, dt.datetime.now().year + 2, 1):
+    em = pd.DataFrame(months, columns=['Month'])
+    em['Year'] = y
+    emy = emy.append(em)
+emy = emy.reset_index(drop=True)
+emya = emy.copy()
+emya['Y'] = 'Year'
+emyb = emy.copy()
+emyb['Y'] = 'Price'
+emy = emyb.append(emya, ignore_index=True)
+emy['Year'] = emy.Year.astype(str)
 
 
 # colbar
@@ -60,6 +71,7 @@ def wdsm(s):
         Color: Year (Darker=Newer)''', end='')
 
     S = ympd[s].loc[ympd[s].Y == 'Year']
+    #S = S.merge(emy, left_on=['Year', 'Month', 'Y'], right_on=['Year', 'Month', 'Y'], how='outer')  # .fillna(0)
     fig1 = px.scatter(S, x='MillWeight', y='YP', color='YC', size='mean_x', symbol='Type',
                       color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month', height=240)
     fig1.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
@@ -70,6 +82,7 @@ def wdsm(s):
     fig1.update_yaxes(autorange="reversed")  # matches=None
 
     S = ympd[s].loc[ympd[s].Y == 'Price']
+    #S = S.merge(emy, left_on=['Year', 'Month', 'Y'], right_on=['Year', 'Month', 'Y'], how='outer')  # .fillna(0)
     fig2 = px.scatter(S, x='MillWeight', y='YP', color='YC', size='count_x',
                       symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
                       height=500, labels={'Type': ''})  # , facet_row='Y'

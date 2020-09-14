@@ -52,6 +52,7 @@ app.layout = html.Div([
     html.Div(id="page-content")
 ])
 
+
 # Callback Page
 @app.callback(
     [Output('index', "active")] + [Output(z, "active") for z in zonel],
