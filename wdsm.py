@@ -47,30 +47,33 @@ def colbar():
 # input
 months = ympd['all'].Month.unique()
 
-mcard, mtarget, mmill, mprice = {}, {}, {}, {}
-for m in months:
-    mill = ympd['all'].loc[(ympd['all'].Month == m) & (ympd['all'].YC == 2020), 'MillWeight'].iloc[0]
-    price = ympd['all'].loc[(ympd['all'].Month == m) & (ympd['all'].YC == 2020), 'Price'].iloc[0]
-
-    mmill[m] = dbc.Row([dbc.Label('MillWeight', size='sm'),
-                        dbc.Label(f'{mill:,.2f}', size='sm')], form=True)
-    mprice[m] = dbc.Row([dbc.Label('Price', size='sm'),
-                         dbc.Label(f'{price:,.2f}', size='sm')], form=True)
-    mtarget[m] = dbc.Row([dbc.Label('Target', size='sm'),
-                          dbc.Input(id=f'{m}-target', value=f'{mill:,.2f}', bs_size="sm")], form=True)
-    mcard[m] = html.Div([mmill[m], mprice[m], mtarget[m]])
+# mcard, mtarget, mmill, mprice = {}, {}, {}, {}
+# for m in months:
+#     mill = ympd['all'].loc[(ympd['all'].Month == m) & (ympd['all'].YC == 2020), 'MillWeight'].iloc[0]
+#     price = ympd['all'].loc[(ympd['all'].Month == m) & (ympd['all'].YC == 2020), 'Price'].iloc[0]
+#
+#     mmill[m] = dbc.Row([dbc.Label('MillWeight', size='sm'),
+#                         dbc.Label(f'{mill:,.2f}', size='sm')], form=True)
+#     mprice[m] = dbc.Row([dbc.Label('Price', size='sm'),
+#                          dbc.Label(f'{price:,.2f}', size='sm')], form=True)
+#     mtarget[m] = dbc.Row([dbc.Label('Target', size='sm'),
+#                           dbc.Input(id=f'{m}-target', value=f'{mill:,.2f}', bs_size="sm")], form=True)
+#     mcard[m] = html.Div([mmill[m], mprice[m], mtarget[m]])
 
 page_wdws = html.Div([
-    dbc.Row([colbar(),
-             dbc.Col([dcc.Graph(id='wdsm1'),
-                      dcc.Graph(id='wdsm2'),
-                      dbc.Row([
-                          dbc.Col([
-                              html.Button(html.P(m, id=f'{m}-label'), id=f'{m}-toggle', className="navbar-toggler"),
-                              dbc.Collapse(mcard[m], id=f'{m}-collapse', is_open=True)
-                          ]) for m in months])
-                      ])
-             ])
+    dbc.Row([
+        colbar(),
+        dbc.Col([
+            dcc.Graph(id='wdsm1'),
+            dcc.Graph(id='wdsm2'),
+            # dbc.Row([
+            #     dbc.Col([
+            #         html.Button(html.P(m, id=f'{m}-label'), id=f'{m}-toggle', className="navbar-toggler"),
+            #         dbc.Collapse(mcard[m], id=f'{m}-collapse', is_open=True)
+            #     ]) for m in months
+            # ])
+        ])
+    ])
 ])
 
 
