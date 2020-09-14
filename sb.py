@@ -4,7 +4,7 @@ import dash_html_components as html
 
 sidebar_header = dbc.Row(
     [
-        dbc.Col(html.H2("Sidebar", className="display-4")),
+        dbc.Col(html.H2("WPS", className="display-4")),
         dbc.Col(
             [
                 html.Button(

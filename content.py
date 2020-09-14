@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-import process
+import cumulative
 
 # Sensitivity Analysis
 with open('Sloc.json', 'r') as o:
@@ -17,7 +17,7 @@ with open('Zone.json', 'r') as o:
 with open('wp.json', 'r') as o:
     wp = json.load(o)
 
-df, list_all, wpmj, wpmsj, wpmjz, wpmsjzm, tls = process.get_data_content()
+df, list_all, wpmj, wpmsj, wpmjz, wpmsjzm, tls = cumulative.get_data_content()
 
 card_main = {}
 for z in zone.keys():

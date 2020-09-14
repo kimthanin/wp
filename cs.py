@@ -13,8 +13,6 @@ from wdsm import page_wdws
 with open('Zone.json', 'r') as o:
     zone = json.load(o)
 zonel = ['all'] + list(zone.keys())
-# import process
-# ymc, ymp = process.get_data_app()
 
 # Server Config
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -35,8 +33,8 @@ app.layout = html.Div([
     html.Div([
         sidebar_header,
         html.Div([
-            html.P("A responsive sidebar layout with collapsible navigation",
-                   className="lead")], id="blurb"),
+            html.P('Wood Pricing Strategy'),
+            html.P('Based on MPlan and Estimated Competition Environment', className="lead")], id="blurb"),
         dbc.Collapse(
             dbc.Nav([
                 dbc.NavLink('Index', href="/", id='index'),

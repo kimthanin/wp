@@ -14,21 +14,11 @@ with open('Zone.json', 'r') as o:
     zone = json.load(o)
 with open('ympd.json', 'r') as o:
     ympd = json.load(o)
-for s in ['all'] + list(zone.keys()) + list(sloc.keys()):
+with open('list_all.json', 'r') as o:
+    list_all = json.load(o)
+for s in list_all:
     ympd[s] = pd.read_json(ympd[s], orient='records')
-months = ympd['all'].Month.unique()
-emy = pd.DataFrame()
-for y in range(2016, dt.datetime.now().year + 2, 1):
-    em = pd.DataFrame(months, columns=['Month'])
-    em['Year'] = y
-    emy = emy.append(em)
-emy = emy.reset_index(drop=True)
-emya = emy.copy()
-emya['Y'] = 'Year'
-emyb = emy.copy()
-emyb['Y'] = 'Price'
-emy = emyb.append(emya, ignore_index=True)
-emy['Year'] = emy.Year.astype(str)
+months = [dt.date(dt.datetime.now().year, i, 1).strftime('%b') for i in range(1, 13)]
 
 
 # colbar
@@ -65,33 +55,30 @@ def page_wdws(z):
 
 
 def wdsm(s):
-    print(s, '''
-        Top: Step_1_Forecast Quantity (Size=Average Transaction Price) | 
-        Bottom: Step_2_Forecast Price (Size=Number of Transactions) | 
-        Color: Year (Darker=Newer)''', end='')
-
     S = ympd[s].loc[ympd[s].Y == 'Year']
-    #S = S.merge(emy, left_on=['Year', 'Month', 'Y'], right_on=['Year', 'Month', 'Y'], how='outer')  # .fillna(0)
-    fig1 = px.scatter(S, x='MillWeight', y='YP', color='YC', size='mean_x', symbol='Type',
+    fig1 = px.scatter(S, x='MillWeight', y='YP', color='YC', size='count_y', symbol='Type',
                       color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month', height=240)
     fig1.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig1.for_each_yaxis(lambda a: a.update(dtick=1))
     fig1.for_each_yaxis(lambda a: a.update(title='', tickangle=90, dtick=1), row=1, col=1)
-    fig1.for_each_xaxis(lambda a: a.update(title='', dtick=10000, showticklabels=False))  # showgrid=True, visible=False
-    fig1.layout.update(coloraxis_showscale=False, showlegend=False, margin=dict(l=0, r=0, t=15, b=0))
+    fig1.for_each_xaxis(lambda a: a.update(title='', showticklabels=False))  # showgrid=True, visible=False, dtick=10000
+    fig1.layout.update(coloraxis_showscale=False, showlegend=False,
+                       margin=dict(l=0, r=0, t=40, b=0))  # , title_font=dict(size=14))
     fig1.update_yaxes(autorange="reversed")  # matches=None
 
     S = ympd[s].loc[ympd[s].Y == 'Price']
-    #S = S.merge(emy, left_on=['Year', 'Month', 'Y'], right_on=['Year', 'Month', 'Y'], how='outer')  # .fillna(0)
-    fig2 = px.scatter(S, x='MillWeight', y='YP', color='YC', size='count_x',
-                      symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
-                      height=500, labels={'Type': ''})  # , facet_row='Y'
+    fig2 = px.scatter(S, x='MillWeight', y='YP', color='YC', size='mean_y', symbol='Type',
+                      color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month', height=500,
+                      labels={'Type': ''})  # , facet_row='Y'
     fig2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig2.for_each_yaxis(lambda a: a.update(title='', tickangle=90), row=1, col=1)
-    fig2.for_each_xaxis(lambda a: a.update(title='', dtick=10000))
+    fig2.for_each_xaxis(lambda a: a.update(title='', tickangle=90))  # , dtick=10000
     fig2.layout.update(coloraxis_showscale=False, legend_orientation='h', margin=dict(l=0, r=0, t=0, b=0))
-
-    return [dcc.Graph(figure=fig1),
+    t = '''Top: Step_1_Forecast Quantity (Size=Average Transaction Size) |
+           Bottom: Step_2_Forecast Price (Size=Number of Transactions) |
+           Color: Year (Dasker=Newer)'''
+    return [dbc.Row(html.P(t), justify="center", align="center"),
+            dcc.Graph(figure=fig1),
             dcc.Graph(figure=fig2),
             # dbc.Row([
             #     dbc.Col([
