@@ -54,14 +54,14 @@ df = pd.read_csv('View_Transaction_SFT_6049_' + ts_str + '.csv', parse_dates=Tru
 df = df.drop(df.loc[(df.Year == dt.datetime.now().year) & (df.Month == dt.datetime.now().month)].index)
 # df= df.Year.isin(['2016', '2017', '2018', '2019', '2020']).reset_index(drop=True)
 df = df.loc[df.Year >= 2016].reset_index(drop=True)
-print(df.shape)
+# print(df.shape)
 months = [dt.date(dt.datetime.now().year, i, 1).strftime('%b') for i in range(1, 13)]
 df['Monthi'] = df['Month']
 df['Month'] = df['Month'].apply(lambda x: months[int(x) - 1])
 df.Year = df.Year.astype('str')
 df.Month = df.Month.astype('str')
 ym, ymi, ymc, ymp, ympd = {}, {}, {}, {}, {}
-for s in ['all']:  # +list(zone.keys())+list(sloc.keys()):
+for s in ['all'] + list(zone.keys()) + list(sloc.keys()):
     if s == 'all':
         dfs = df.copy()
     elif len(s) == 2:

@@ -2,112 +2,54 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import plotly.express as px
+# import plotly.express as px
 from dash.dependencies import Input, Output, State
 
-import process
-import sb
-from wdsm import ympd
+from sb import sidebar_header
+from wdsm import page_wdws
 
+# import process
+# ymc, ymp = process.get_data_app()
+
+# Server Config
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
 sbcss = 'https://raw.githubusercontent.com/facultyai/dash-bootstrap-components/master/examples/multi-page-apps/\
 responsive-collapsible-sidebar/assets/responsive-sidebar.css'
 # https://raw.githubusercontent.com/kimthanin/wp/master/assets/responsive-sedbar.css
 external_stylesheets = [dbc.themes.BOOTSTRAP, sbcss]
 app = dash.Dash(__name__,
-                # suppress_callback_exceptions=True,
+                suppress_callback_exceptions=True,
                 external_stylesheets=external_stylesheets,
                 meta_tags=[meta]
                 )
 server = app.server
-sidebar_header = sb.sidebar_header
-sidebar = html.Div(
-    [
+
+# Main
+app.layout = html.Div([
+    dcc.Location(id="url"),
+    html.Div([
         sidebar_header,
-        html.Div(
-            [
-                html.Hr(),
-                html.P(
-                    "A responsive sidebar layout with collapsible navigation "
-                    "links.",
-                    className="lead",
-                ),
-            ],
-            id="blurb",
-        ),
+        html.Div([
+            html.P("A responsive sidebar layout with collapsible navigation",
+                   className="lead")], id="blurb"),
         dbc.Collapse(
-            dbc.Nav(
-                [
-                    dbc.NavLink("Page 1", href="/page-1", id="page-1-link"),
-                    dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
-                    dbc.NavLink("Page 3", href="/page-3", id="page-3-link"),
-                ],
-                vertical=True,
-                pills=True,
-            ),
-            id="collapse",
-        ),
-    ],
-    id="sidebar",
-)
-
-content = html.Div(id="page-content")
-app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
-
-# wdws
-ymc, ymp = process.get_data_app()
-d_year = dbc.Row([
-    dbc.Col(dbc.Label('Year')),
-    dbc.Col(dcc.Dropdown(id='wdws_y', value='all',  # + list(df.Year.unique(),
-                         options=[{'label': y, 'value': y} for y in ['all']]))
-], form=True)
-d_month = dbc.Row([
-    dbc.Col(dbc.Label('Month')),
-    dbc.Col(dcc.Dropdown(id='wdws_m', value='all',  # + list(df.Year.unique(),
-                         options=[{'label': y, 'value': y} for y in ['all']]))
-], form=True)
-d_sloc = dbc.Row([
-    dbc.Col(dbc.Label('SLOC')),
-    dbc.Col(dcc.Dropdown(id='wdws_s', value='all',
-                         options=[{'label': y, 'value': y} for y in ['all']]))
-], form=True)
-
-card_wdws = html.Div([d_year, d_month, d_sloc])
-
-colbar = html.Div([
-    html.Button(html.P('Select Data', id='colbar-label'), id='colbar-toggle', className="navbar-toggler"),
-    dbc.Collapse(card_wdws, id='colbar-collapse', is_open=True)
+            dbc.Nav([
+                dbc.NavLink("Page 1", href="/page-1", id="page-1-link"),
+                dbc.NavLink("Page 2", href="/page-2", id="page-2-link"),
+                dbc.NavLink("Page 3", href="/page-3", id="page-3-link")],
+                vertical=True, pills=True),
+            id="collapse")],
+        id="sidebar"),
+    html.Div(id="page-content")
 ])
 
-page_wdws = dbc.Row([colbar, dbc.Col([dcc.Graph(id='wdsm1'), dcc.Graph(id='wdsm2')])])
 
-
-# App Callback
+# Callback WDSM
 @app.callback([Output('wdsm1', 'figure'), Output('wdsm2', 'figure')],
               [Input('wdws_y', 'value'), Input('wdws_m', 'value'), Input('wdws_s', 'value')])
-def ug_wdws(y, m, s):
-    print(y, m, s, '''
-    Top: Step_1_Forecast Quantity (Size=Average Transaction Price) | 
-    Bottom: Step_2_Forecast Price (Size=Number of Transactions) | 
-    Color: Year (Darker=Newer)''', end='')
-    fig1 = px.scatter(ympd['all'].loc[ympd['all'].Y == 'Year'], x='MillWeight', y='YP', color='YC', size='mean_x',
-                      symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
-                      height=240)
-    fig1.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig1.for_each_yaxis(lambda a: a.update(dtick=1))
-    fig1.for_each_yaxis(lambda a: a.update(title='', tickangle=90, dtick=1), row=1, col=1)
-    fig1.for_each_xaxis(lambda a: a.update(title='', dtick=10000, showticklabels=False))  # showgrid=True, visible=False
-    fig1.layout.update(coloraxis_showscale=False, showlegend=False, margin=dict(l=0, r=0, t=15, b=0))
-    fig1.update_yaxes(autorange="reversed")  # matches=None
-
-    fig2 = px.scatter(ympd['all'].loc[ympd['all'].Y == 'Price'], x='MillWeight', y='YP', color='YC', size='count_x',
-                      symbol='Type', color_continuous_scale='Blugrn', facet_col_spacing=0.005, facet_col='Month',
-                      height=500, labels={'Type': ''})  # , facet_row='Y'
-    fig2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig2.for_each_yaxis(lambda a: a.update(title='', tickangle=90), row=1, col=1)
-    fig2.for_each_xaxis(lambda a: a.update(title='', dtick=10000))
-    fig2.layout.update(coloraxis_showscale=False, legend_orientation='h', margin=dict(l=0, r=0, t=0, b=0))
-
+def update_wdsm(y1, m1, s1):
+    from wdsm import wdsm
+    fig1, fig2 = wdsm(y1, m1, s1)
     return [fig1, fig2]
 
 
@@ -179,7 +121,7 @@ def toggle_collapse(n, is_open):
 
 
 if __name__ == "__main__":
-    # app.run_server(port=5005, debug=True)
+    app.run_server(port=5005, debug=False)
     # app.run_server(port=80,debug=True)
-    app.run_server(port=80, host='0.0.0.0')
+    # app.run_server(port=80, host='0.0.0.0')
     # waitress-serve --listen="0.0.0.0:80" woodpricing:server
