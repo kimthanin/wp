@@ -93,3 +93,8 @@
     transition: margin-left 0.3s ease-in-out;
   }
 }
+
+.nav-tabs .active.nav-link {
+  background: #28a745; #007bff
+  color: white !important;
+}

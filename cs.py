@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 
 import dash
@@ -7,9 +8,11 @@ import dash_html_components as html
 # import plotly.express as px
 from dash.dependencies import Input, Output, State
 
+import wdsm
 from sb import sidebar_header
-from wdsm import page_wdws
 
+with open('list_all.json', 'r') as o:
+    list_all = json.load(o)
 with open('Zone.json', 'r') as o:
     zone = json.load(o)
 zonel = ['all'] + list(zone.keys())
@@ -33,8 +36,8 @@ app.layout = html.Div([
     html.Div([
         sidebar_header,
         html.Div([
-            html.P('Wood Pricing Strategy'),
-            html.P('Based on MPlan and Estimated Competition Environment', className="lead")], id="blurb"),
+            html.P('Wood Pricing Strategy', className="lead"),
+            html.P('Based on MPlan and Estimated Competition Environment')], id="blurb"),
         dbc.Collapse(
             dbc.Nav([
                 dbc.NavLink('Index', href="/", id='index'),
@@ -67,30 +70,39 @@ def render_page_content(pathname):
     if pathname == "/":
         return html.Div('Index')
     if pathname == "/all":
-        return page_wdws('all')
+        return wdsm.page('all')
     elif pathname == "/CH":
-        return page_wdws('CH')
+        return wdsm.page('CH')
     elif pathname == "/N1":
-        return page_wdws('N1')
+        return wdsm.page('N1')
     elif pathname == "/N2":
-        return page_wdws('N2')
+        return wdsm.page('N2')
     elif pathname == "/N3":
-        return page_wdws('N3')
+        return wdsm.page('N3')
     elif pathname == "/W1":
-        return page_wdws('W1')
+        return wdsm.page('W1')
     return dbc.Jumbotron([
         html.H1("404: Not found", className="text-danger"),
-        html.Hr(),
         html.P(f"The pathname {pathname} was not recognised...")
     ])
 
 
 # Callback WDSM
 for z in zonel:
-    @app.callback(Output(f'{z}-wdsm', 'children'), Input(f'{z}-input', 'value'))
+    @app.callback(Output(f'{z}-wdsm', 'children'), Input(f'{z}-input', 'active_tab'))
     def update_wdsm(s):
-        from wdsm import wdsm
-        return wdsm(s)
+        return wdsm.graph(s)
+
+months = [dt.date(dt.datetime.now().year, i, 1).strftime('%b') for i in range(1, 13)]
+year = dt.datetime.now().year
+years = [str(year), str(year + 1)]
+for s in list_all:
+    for y in years:
+        for m in months:
+            @app.callback(Output(f'{s}-{y}-{m}-label', 'children'),
+                          Input(f'{s}-{y}-{m}-target', 'value'))
+            def update_sym(target):
+                return target
 
 
 # Callback colbar
