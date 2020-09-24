@@ -5,17 +5,11 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-# import plotly.express as px
+import pandas as pd
 from dash.dependencies import Input, Output, State
 
-import wdsm
+import wdsm, index
 from sb import sidebar_header
-
-with open('list_all.json', 'r') as o:
-    list_all = json.load(o)
-with open('Zone.json', 'r') as o:
-    zone = json.load(o)
-zonel = ['all'] + list(zone.keys())
 
 # Server Config
 meta = {"name": "viewport", "content": "width=device-width, initial-scale=1"}
@@ -53,39 +47,41 @@ app.layout = html.Div([
     html.Div(id="page-content")
 ])
 
+with open('list_all.json', 'r') as o:
+    list_all = json.load(o)
+with open('Zone.json', 'r') as o:
+    zone = json.load(o)
+zonel = ['all'] + list(zone.keys())
+months = [dt.date(dt.datetime.now().year, i, 1).strftime('%b') for i in range(1, 13)]
+year = dt.datetime.now().year
+years = [str(year), str(year + 1)]
 
-# Callback Page
-@app.callback(
-    [Output('index', "active")] + [Output(z, "active") for z in zonel],
-    [Input("url", "pathname")],
-)
-def toggle_active_links(pathname):
-    if pathname == "/":
-        return True, False, False, False, False, False, False
-    return [False] + [pathname == f'/{z}' for z in zonel]
+# Callback Save
+ci = {}
+for s_ in list_all:
+    ci[s_] = []
+    for y_ in years:
+        for t_ in ['target', 'mill', 'price']:
+            for m_ in months:
+                ci[s_] = ci[s_] + [Input(f'{s_}-{y_}-{m_}-{t_}', 'value')]
 
-
-@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-def render_page_content(pathname):
-    if pathname == "/":
-        return html.Div('Index')
-    if pathname == "/all":
-        return wdsm.page('all')
-    elif pathname == "/CH":
-        return wdsm.page('CH')
-    elif pathname == "/N1":
-        return wdsm.page('N1')
-    elif pathname == "/N2":
-        return wdsm.page('N2')
-    elif pathname == "/N3":
-        return wdsm.page('N3')
-    elif pathname == "/W1":
-        return wdsm.page('W1')
-    return dbc.Jumbotron([
-        html.H1("404: Not found", className="text-danger"),
-        html.P(f"The pathname {pathname} was not recognised...")
-    ])
-
+for s_ in list_all:
+    @app.callback([Output(f'{s_}-toast', 'is_open'), Output(f'{s_}-toast', 'children')],
+                  [Input(f'{s_}-save_target', 'n_clicks')] + ci[s_])
+    def save_target(n, *ci_):
+        dfy = {}
+        i = 0
+        for y_ in years:
+            for t_ in ['target', 'mill', 'price']:
+                dfy[y_][t_] = pd.DataFrame(ci_[i:i + 12], columns=t_)
+                dfy[y_][t_]['Year'] = y_
+                dfy[y_][t_]['Month'] = months
+                i += 12
+            dfytm = dfy[y_]['price'].merge(dfy['mill'][t_], left_on=['Year', 'Month'], right_on=['Year', 'Month'])
+            dfy[y_]['tm'] = dfytm.merge(dfy[y_]['target'], left_on=['Year', 'Month'], right_on=['Year', 'Month'])
+        dfy['ym'] = dfy[years[0]]['tm'].append(dfy[years[1]]['tm'])
+        dfy['ym'].to_csv('/target/' + s_ + '.csv', index=False)
+        return [True, 'Saved: ' + str(n)]
 
 # Callback WDSM
 for z in zonel:
@@ -93,16 +89,26 @@ for z in zonel:
     def update_wdsm(s):
         return wdsm.graph(s)
 
-months = [dt.date(dt.datetime.now().year, i, 1).strftime('%b') for i in range(1, 13)]
-year = dt.datetime.now().year
-years = [str(year), str(year + 1)]
-for s in list_all:
-    for y in years:
-        for m in months:
-            @app.callback(Output(f'{s}-{y}-{m}-label', 'children'),
-                          Input(f'{s}-{y}-{m}-target', 'value'))
-            def update_sym(target):
-                return target
+
+# Callback Index
+@app.callback(Output(f'index-page', 'children'), Input(f'index-tab', 'active_tab'))
+def update_index(s):
+    return html.P(s)
+
+
+# Callback Target
+for s_ in list_all:
+    for y_ in years:
+        for m_ in months:
+            @app.callback([Output(f'{s_}-{y_}-{m_}-label', 'children'), Output(f'{s_}-{y_}-{m_}-label', 'color'),
+                           Output(f'{s_}-{y_}-{m_}-amount', 'children'), Output(f'{s_}-{y_}-{m_}-amount', 'color')],
+                          [Input(f'{s_}-{y_}-{m_}-target', 'value'), Input(f'{s_}-{y_}-{m_}-mill', 'children')])
+            def update_sym(target, mill):
+                amount = round(float(mill.replace(',', '')) - float(target.replace(',', '')), 2)
+                if amount < 0:
+                    return ['Under Target', 'danger', amount, 'danger']
+                else:
+                    return ['Over Target', 'success', amount, 'success']
 
 
 # Callback colbar
@@ -145,8 +151,36 @@ def toggle_collapse(n, is_open):
     return is_open
 
 
+# Callback Page
+@app.callback([Output('index', "active")] + [Output(z, "active") for z in zonel],
+              [Input("url", "pathname")])
+def toggle_active_links(pathname):
+    if pathname == "/":
+        return True, False, False, False, False, False, False
+    return [False] + [pathname == f'/{z_}' for z_ in zonel]
+
+
+@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
+def render_page_content(pathname):
+    if pathname == "/":
+        return index.page('all')  # html.Div('Index')
+    if pathname == "/all":
+        return wdsm.page('all')
+    elif pathname == "/CH":
+        return wdsm.page('CH')
+    elif pathname == "/N1":
+        return wdsm.page('N1')
+    elif pathname == "/N2":
+        return wdsm.page('N2')
+    elif pathname == "/N3":
+        return wdsm.page('N3')
+    elif pathname == "/W1":
+        return wdsm.page('W1')
+    return dbc.Jumbotron([
+        html.H1("404: Not found", className="text-danger"),
+        html.P(f"The pathname {pathname} was not recognised...")
+    ])
+
+
 if __name__ == "__main__":
     app.run_server(port=5005, debug=False)
-    # app.run_server(port=80,debug=True)
-    # app.run_server(port=80, host='0.0.0.0')
-    # waitress-serve --listen="0.0.0.0:80" woodpricing:server

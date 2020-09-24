@@ -23,37 +23,40 @@ for s in list_all:
 months = [dt.date(dt.datetime.now().year, i, 1).strftime('%b') for i in range(1, 13)]
 year = dt.datetime.now().year
 years = [str(year), str(year + 1)]
-mcol, mtarget, mmill, mprice, ry = {}, {}, {}, {}, {}
+mcol, mret, mtarget, mmill, mprice, ry = {}, {}, {}, {}, {}, {}
 for s in list_all:
-    mcol[s], mtarget[s], mmill[s], mprice[s], ry[s] = {}, {}, {}, {}, {}
+    mcol[s], mret[s], mtarget[s], mmill[s], mprice[s], ry[s] = {}, {}, {}, {}, {}, {}
     for y in years:
-        mcol[s][y], mtarget[s][y], mmill[s][y], mprice[s][y] = {}, {}, {}, {}
+        mcol[s][y], mret[s][y], mtarget[s][y], mmill[s][y], mprice[s][y] = {}, {}, {}, {}, {}
         for m in months:
             mill = ympd[s].loc[(ympd[s].Month == m) & (ympd[s].YC == int(y)), 'MillWeight'].iloc[0]
             price = ympd[s].loc[(ympd[s].Month == m) & (ympd[s].YC == int(y)), 'Price'].iloc[0]
             mmill[s][y][m] = dbc.Row([
                 dbc.Col(dbc.Label('MillWeight', size='sm')),
-                dbc.Col(dbc.Label(f'{mill:,.2f}', size='sm'))
+                dbc.Col(dbc.Label(f'{mill:,.2f}', size='sm', id=f'{s}-{y}-{m}-mill'))
             ], form=True)
             mprice[s][y][m] = dbc.Row([
                 dbc.Col(dbc.Label('Price', size='sm')),
-                dbc.Col(dbc.Label(f'{price:,.2f}', size='sm'))
+                dbc.Col(dbc.Label(f'{price:,.2f}', size='sm', id=f'{s}-{y}-{m}-price'))
             ], form=True)
             mtarget[s][y][m] = dbc.Row([
-                dbc.Col(dbc.Label('Target', size='sm')),
-                dbc.Col(dbc.Input(id=f'{s}-{y}-{m}-target', bs_size="sm", value=f'{mill:,.2f}'))
+                dbc.Col(dbc.Label('Target', size='sm')),  # , color='red'
+                dbc.Col(dbc.Input(bs_size='sm', value=f'{mill:,.2f}', id=f'{s}-{y}-{m}-target'))
+            ], form=True)
+            mret[s][y][m] = dbc.Row([
+                dbc.Col(dbc.Label(size='sm', id=f'{s}-{y}-{m}-label')),
+                dbc.Col(dbc.Label(size='sm', id=f'{s}-{y}-{m}-amount'))
             ], form=True)
             mcol[s][y][m] = dbc.Col([
                 html.Button(html.P(m, style={'font-size': 'small'}),
-                            id=f'{s}-{y}-{m}-toggle', className="navbar-toggler"),
-                dbc.Collapse([mmill[s][y][m], mprice[s][y][m], mtarget[s][y][m],
-                              dbc.Label('Target', size='sm', id=f'{s}-{y}-{m}-label')],
-                             id=f'{s}-{y}-{m}-collapse', is_open=True)
-            ], sm=4, md=2, lg=1)
+                            className='navbar-toggler', id=f'{s}-{y}-{m}-toggle'),
+                dbc.Collapse([mmill[s][y][m], mprice[s][y][m], mtarget[s][y][m], mret[s][y][m]],
+                             is_open=True, id=f'{s}-{y}-{m}-collapse')
+            ], sm=2, md=4, lg=1)
 
         ry[s][y] = dbc.Card([
             dbc.CardHeader(y),  # html.P(y, style={'font-size': 'small'}),
-            dbc.Row([mcol[s][y][m] for m in months])  # , no_gutters=True
+            dbc.Row([mcol[s][y][m] for m in months], form=True)  # , no_gutters=True
         ])
 
 
@@ -61,16 +64,27 @@ for s in list_all:
 def page(z):
     zonel = list(zone.keys())
     zoner = ['all'] + zonel if z == 'all' else zone[z]
-    t = '''Top: Step_1_Forecast Quantity (Size=Average Transaction Size) |
-           Bottom: Step_2_Forecast Price (Size=Number of Transactions) |
-           Color: Year (Darker=Newer)'''
+    t11 = 'Top: Step_1_Forecast Quantity'
+    t12 = 'X = Ton | Y = Year | Size = Average Transaction Size'
+    t21 = 'Bottom: Step_2_Forecast Price'
+    t22 = 'X = Ton | Y = Price | Size = Number of Transactions'
+    t31 = 'Color: Year'
+    t32 = 'Darker = Newer'
     return html.Div([
         dbc.Tabs([dbc.Tab(label=s, tab_id=s) for s in zoner], id=f'{z}-input'),
-        html.P(t, style={'font-size': 'small'}),
+        dbc.Row([
+            dbc.Col([html.P(t11, style={'font-size': 'small', 'font-weight': 'bold'}),
+                     html.P(t12, style={'font-size': 'small', 'font-weight': 'bold'})]),
+            dbc.Col([html.P(t21, style={'font-size': 'small', 'font-weight': 'bold'}),
+                     html.P(t22, style={'font-size': 'small', 'font-weight': 'bold'})]),
+            dbc.Col([html.P(t31, style={'font-size': 'small', 'font-weight': 'bold'}),
+                     html.P(t32, style={'font-size': 'small', 'font-weight': 'bold'})])
+        ]),
         dbc.Row([
             dbc.Col(id=f'{z}-wdsm')
-            ])
         ])
+    ])
+
 
 
 # wdsm_graph
@@ -83,7 +97,7 @@ def graph(s):
     fig1.for_each_yaxis(lambda a: a.update(title='', tickangle=90, dtick=1), row=1, col=1)
     fig1.for_each_xaxis(lambda a: a.update(title='', showticklabels=False))  # showgrid=True, visible=False, dtick=10000
     fig1.layout.update(coloraxis_showscale=False, showlegend=False,
-                       margin=dict(l=0, r=0, t=15, b=0))  # , title_font=dict(size=14))
+                       margin=dict(l=0, r=0, t=24, b=0))  # , title_font=dict(size=14))
     fig1.update_yaxes(autorange="reversed")  # matches=None
 
     S = ympd[s].loc[ympd[s].Y == 'Price']
@@ -93,6 +107,9 @@ def graph(s):
     fig2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig2.for_each_yaxis(lambda a: a.update(title='', tickangle=90), row=1, col=1)
     fig2.for_each_xaxis(lambda a: a.update(title='', tickangle=90))  # , dtick=10000
-    fig2.layout.update(coloraxis_showscale=False, legend_orientation='h', margin=dict(l=0, r=0, t=0, b=0))
+    fig2.layout.update(coloraxis_showscale=False, legend_orientation='h',
+                       margin=dict(l=0, r=0, t=0, b=0))
 
-    return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2), ry[s]['2020'], ry[s]['2021']]
+    return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2), ry[s]['2020'], ry[s]['2021'],
+            dbc.Button('Save', id=f'{s}-save_target', color="success"),
+            dbc.Toast(duration=2000, id=f'{s}-toast')]
